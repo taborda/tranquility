@@ -7,9 +7,24 @@ import java.security.cert.CertificateException
 import javax.net.ssl.{TrustManagerFactory, SSLContext}
 
 import com.metamx.common.scala.Logging
+import com.metamx.tranquility.config.PropertiesBasedConfig
 
 object SSLContextMaker extends Logging
 {
+  def createSSLContextOption(
+    config: PropertiesBasedConfig
+  ): Option[SSLContext] =
+  {
+    createSSLContextOption(
+      Some(config.tlsEnable),
+      Some(config.tlsProtocol),
+      Some(config.tlsTrustStoreType),
+      Some(config.tlsTrustStorePath),
+      Some(config.tlsTrustStoreAlgorithm),
+      Some(config.tlsTrustStorePassword)
+    )
+  }
+
   def createSSLContextOption(
     tlsEnable: Option[Boolean] = None,
     tlsProtocol: Option[String] = None,

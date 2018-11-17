@@ -18,6 +18,8 @@
  */
 package com.metamx.tranquility.kafka.writer;
 
+import javax.net.ssl.SSLContext;
+
 import com.google.common.primitives.Ints;
 import com.metamx.common.logger.Logger;
 import com.metamx.common.scala.net.curator.Disco;
@@ -26,6 +28,9 @@ import com.metamx.tranquility.finagle.FinagleRegistry;
 import com.metamx.tranquility.finagle.FinagleRegistryConfig;
 import com.metamx.tranquility.kafka.model.MessageCounters;
 import com.metamx.tranquility.kafka.model.PropertiesBasedKafkaConfig;
+import com.metamx.tranquility.security.SSLContextMaker;
+import scala.Option;
+
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -154,11 +159,18 @@ public class WriterController
       curators.put(curatorKey, curator);
     }
 
+
     final String finagleKey = String.format("%s:%s", curatorKey, dataSourceConfig.propertiesBasedConfig().discoPath());
     if (!finagleRegistries.containsKey(finagleKey)) {
+      Option<SSLContext> sslContext = SSLContextMaker.createSSLContextOption(
+          dataSourceConfig.propertiesBasedConfig()
+      );
       finagleRegistries.put(
           finagleKey, new FinagleRegistry(
-              FinagleRegistryConfig.builder().build(),
+              FinagleRegistryConfig
+                  .builder()
+                  .sslContextOption(sslContext)
+                  .build(),
               new Disco(curators.get(curatorKey), dataSourceConfig.propertiesBasedConfig())
           )
       );
