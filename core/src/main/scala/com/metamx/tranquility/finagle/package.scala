@@ -51,7 +51,7 @@ package object finagle
 
   private[this] def decorateRequest(req: http.Request): Unit = {
     // finagle-http doesn't set the host header, and we don't actually know what server we're hitting
-    req.headerMap("Host") = "127.0.0.1"
+    req.headerMap("Host") = req.remoteAddress.getHostAddress
     req.headerMap("Accept") = "*/*"
   }
 }
