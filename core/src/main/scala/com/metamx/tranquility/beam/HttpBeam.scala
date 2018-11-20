@@ -35,8 +35,9 @@ import com.metamx.tranquility.typeclass.ObjectWriter
 import com.metamx.tranquility.typeclass.Timestamper
 import com.twitter.finagle.Name
 import com.twitter.finagle.builder.ClientBuilder
-import com.twitter.finagle.http.Http
+import com.twitter.finagle.Http
 import com.twitter.finagle.http.Request
+import com.twitter.finagle.param.Logger
 import com.twitter.finagle.service.ExpiringService
 import com.twitter.finagle.util.DefaultTimer
 import com.twitter.io.Buf
@@ -75,23 +76,30 @@ class HttpBeam[A: Timestamper](
 
   private[this] val hostAndPort = "%s:%s" format(uri.host, port)
 
+  private def mkid(scheme: String, name: String): String = s"$scheme!$name"
+
   private[this] val client = {
     val resolver = InetAddressResolver.default
-    val preTlsClientBuilder = ClientBuilder()
-      .name(uri.toString)
-      .codec(Http())
-      .dest(Name.Bound(resolver.bind(hostAndPort), "%s!%s" format(resolver.scheme, hostAndPort)))
-      .hostConnectionLimit(2)
+
+    val id = mkid(resolver.scheme, hostAndPort)
+
+    val c = Http.client
+      .withLabel(uri.toString)
+      .withSessionPool.maxSize(2)
       .configured(ExpiringService.Param(util.Duration.Top, HttpBeam.DefaultConnectionMaxLifeTime))
-      .tcpConnectTimeout(HttpBeam.DefaultConnectTimeout)
-      .timeout(HttpBeam.DefaultTimeout)
-      .logger(FinagleLogger)
-      .daemon(true)
-    if (uri.scheme == "https") {
-      preTlsClientBuilder.tls(uri.host).build()
+      .withTransport.connectTimeout(HttpBeam.DefaultConnectTimeout)
+      .configured(Logger(FinagleLogger))
+
+    val d = if (uri.scheme == "https") {
+      c.withTransport.tls(uri.host)
     } else {
-      preTlsClientBuilder.build()
+      c
     }
+
+    d
+      .methodBuilder(Name.Bound(resolver.bind(hostAndPort), id))
+      .withTimeoutTotal(HttpBeam.DefaultTimeout)
+      .newService(id)
   }
 
   private[this] def request(messages: Seq[A]): Request = HttpPost(uri.path) withEffect {

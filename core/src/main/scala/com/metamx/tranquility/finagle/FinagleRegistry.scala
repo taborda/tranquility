@@ -23,8 +23,13 @@ import com.metamx.common.scala.Logging
 import com.metamx.common.scala.Predef._
 import com.metamx.common.scala.net.curator.Disco
 import com.metamx.common.scala.net.finagle.DiscoResolver
+import com.metamx.tranquility.beam.HttpBeam
 import com.twitter.finagle._
 import com.twitter.finagle.builder.ClientBuilder
+import com.twitter.finagle.param.Logger
+import com.twitter.finagle.service.ExpiringService
+import com.twitter.finagle.service.FailFastFactory
+import com.twitter.util
 import com.twitter.util.Future
 import com.twitter.util.Time
 import java.util.concurrent.atomic.AtomicBoolean
@@ -78,20 +83,23 @@ class FinagleRegistry(
         }
       )
     }
-    val clientBuilder = ClientBuilder()
-      .name(id)
-      .codec(http.Http())
-      .dest(Name.Bound(resolver.bind(name), id))
-      .hostConnectionLimit(config.finagleHttpConnectionsPerHost)
-      .timeout(config.finagleHttpTimeout.standardDuration)
-      .logger(FinagleLogger)
-      .daemon(true)
-      .failFast(config.finagleEnableFailFast)
 
-    val client = config.sslContextOption match {
-      case Some(sslContext) => clientBuilder.tls(sslContext).build()
-      case None => clientBuilder.build()
+    val c = Http.client
+      .withLabel(id)
+      .withSessionPool.maxSize(config.finagleHttpConnectionsPerHost)
+      .withTransport.connectTimeout(HttpBeam.DefaultConnectTimeout)
+      .configured(Logger(FinagleLogger))
+      .configured(FailFastFactory.FailFast(enabled = config.finagleEnableFailFast))
+
+    val d = config.sslContextOption match {
+      case Some(sslContext) => c.withTransport.tls(sslContext)
+      case None => c
     }
+
+    val client = d
+      .methodBuilder(Name.Bound(resolver.bind(name), id))
+      .withTimeoutTotal(config.finagleHttpTimeout.standardDuration)
+      .newService(id)
 
     new SharedService(
       new ServiceProxy(client)
