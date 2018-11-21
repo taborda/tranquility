@@ -55,6 +55,7 @@ import javax.ws.rs.core.MediaType
 import org.apache.curator.framework.CuratorFramework
 import org.joda.time.DateTime
 import org.scalatest.FunSuite
+import scala.util.control.NonFatal
 
 object DirectDruidTest
 {

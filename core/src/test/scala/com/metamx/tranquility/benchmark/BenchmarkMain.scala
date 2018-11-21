@@ -46,7 +46,6 @@ import com.twitter.finagle.http.Request
 import com.twitter.finagle.http.Response
 import com.twitter.io.Buf
 import com.twitter.util.Future
-import com.twitter.util.NonFatal
 import com.twitter.util.Return
 import com.twitter.util.Throw
 import java.io.ByteArrayInputStream
@@ -54,6 +53,7 @@ import java.util.concurrent.atomic.AtomicLong
 import org.joda.time.DateTime
 import scala.collection.JavaConverters._
 import scala.collection.Set
+import scala.util.control.NonFatal
 
 object BenchmarkMain extends Logging with CuratorRequiringSuite
 {

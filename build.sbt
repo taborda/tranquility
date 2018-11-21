@@ -18,7 +18,7 @@ val guiceVersion = "4.0"
 val flinkVersion = "1.0.3"
 val finagleVersion = "18.12.0-SNAPSHOT"
 val finagleHttpAuthVersion = "0.1.0"
-val twitterUtilVersion = "6.42.0"
+val twitterUtilVersion = "18.12.0-SNAPSHOT"
 val samzaVersion = "0.12.0"
 val sparkVersion = "1.6.0"
 val scalatraVersion = "2.3.1"
@@ -45,7 +45,7 @@ def dependOnDruid(artifact: String) = {
 }
 
 val coreDependencies = Seq(
-  "com.metamx" %% "scala-util" % "1.13.6"
+  "com.metamx" %% "scala-util" % "1.13.7-SNAPSHOT"
     exclude("log4j", "log4j")
     exclude("mysql", "mysql-connector-java") // Not needed, unwanted GPLv2 license
     force(),
