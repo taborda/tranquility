@@ -50,7 +50,7 @@ val coreDependencies = Seq(
     exclude("mysql", "mysql-connector-java") // Not needed, unwanted GPLv2 license
     force(),
   "com.metamx" % "java-util" % "0.28.2" exclude("log4j", "log4j") force(),
-  "io.netty" % "netty" % "3.10.5.Final" force(),
+  "io.netty" % "netty-handler" % "4.1.28.Final" force(),
   "org.apache.curator" % "curator-client" % curatorVersion force(),
   "org.apache.curator" % "curator-framework" % curatorVersion force(),
   "org.apache.curator" % "curator-recipes" % curatorVersion force(),
